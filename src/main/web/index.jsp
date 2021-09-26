@@ -29,18 +29,19 @@
                 <h4 class="modal-title" id="myModalLabel">员工添加</h4>
             </div>
             <div class="modal-body">
-
-                <form class="form-horizontal">
+                <form class="form-horizontal" id="emp_model">
                     <div class="form-group">
-                        <label for="empAdd_input" class="col-sm-2 control-label" >empName</label>
+                        <label for="empAdd_input" class="col-sm-2 control-label">empName</label>
                         <div class="col-sm-5">
-                            <input type="text" class="form-control" id="empAdd_input" name="empName" placeholder="empName">
+                            <input type="text" class="form-control" id="empAdd_input" name="empName"
+                                   placeholder="empName">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="emailAdd_input" class="col-sm-2 control-label">email</label>
                         <div class="col-sm-5">
-                            <input type="email" class="form-control" id="emailAdd_input" name="email" placeholder="email@qq.com">
+                            <input type="email" class="form-control" id="emailAdd_input" name="email"
+                                   placeholder="email@qq.com">
                         </div>
                     </div>
                     <div class="form-group">
@@ -66,7 +67,7 @@
             </div>
             <div class="modal-footer ">
                 <button type="button" class="btn btn-default " data-dismiss="modal">关闭</button>
-                <button type="button" class="btn btn-primary">保存修改</button>
+                <button type="button" class="btn btn-primary" id="emp_save_button">保存修改</button>
             </div>
         </div>
     </div>
@@ -106,23 +107,6 @@
                 </thead>
                 <tbody>
                 </tbody>
-                <%--                <c:forEach items="${page.list}" var="emp">--%>
-                <%--                    <tr>--%>
-                <%--                        <th>${emp.empId}</th>--%>
-                <%--                        <th>${emp.empName}</th>--%>
-                <%--                        <th>${emp.gender=="0"?"男":"女"}</th>--%>
-                <%--                        <th>${emp.email}</th>--%>
-                <%--                        <th>${emp.department.deptName}</th>--%>
-                <%--                        <th>--%>
-                <%--                            <button type="button" class="btn btn-primary btn-sm" aria-label="Left Align">--%>
-                <%--                                <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>编辑--%>
-                <%--                            </button>--%>
-                <%--                            <button type="button" class="btn btn-danger btn-sm" aria-label="Left Align">--%>
-                <%--                                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>删除--%>
-                <%--                            </button>--%>
-                <%--                        </th>--%>
-                <%--                    </tr>--%>
-                <%--                </c:forEach>--%>
             </table>
         </div>
     </div>
@@ -133,42 +117,11 @@
         </div>
         <%--        分页--%>
         <div class="col-md-6" id="pages">
-            <%--            <nav aria-label="Page navigation">--%>
-            <%--                <ul class="pagination">--%>
-            <%--                    <c:if test="${page.hasPreviousPage}">--%>
-            <%--                        <li>--%>
-            <%--                            <a href="${APP_PATH}/emps?pageNum=1">首页</a>--%>
-            <%--                        </li>--%>
-            <%--                        <li>--%>
-            <%--                            <a href="${APP_PATH}/emps?pageNum=${page.pageNum-1}" aria-label="Previous">--%>
-            <%--                                <span aria-hidden="true">&laquo;</span>--%>
-            <%--                            </a>--%>
-            <%--                        </li>--%>
-            <%--                    </c:if>--%>
-            <%--                    <c:forEach items="${page.navigatepageNums}" var="pageNum">--%>
-            <%--                        <c:if test="${pageNum==page.pageNum}">--%>
-            <%--                            <li class="active"><a href="#">${pageNum}</a></li>--%>
-            <%--                        </c:if>--%>
-            <%--                        <c:if test="${pageNum!=page.pageNum}">--%>
-            <%--                            <li><a href="${APP_PATH}/emps?pageNum=${pageNum}">${pageNum}</a></li>--%>
-            <%--                        </c:if>--%>
-            <%--                    </c:forEach>--%>
-            <%--                    <c:if test="${page.hasNextPage}">--%>
-            <%--                        <li>--%>
-            <%--                            <a href="${APP_PATH}/emps?pageNum=${page.pageNum+1}" aria-label="Next">--%>
-            <%--                                <span aria-hidden="true">&raquo;</span>--%>
-            <%--                            </a>--%>
-            <%--                        </li>--%>
-            <%--                        <li>--%>
-            <%--                            <a href="${APP_PATH}/emps?pageNum=${page.pages}">末页</a>--%>
-            <%--                        </li>--%>
-            <%--                    </c:if>--%>
-            <%--                </ul>--%>
-            <%--            </nav>--%>
         </div>
     </div>
 </div>
 <script type="text/javascript">
+    var totalpages;
     $(function () {
         to_page(1);
     });
@@ -215,7 +168,7 @@
     function result_pages(result) {
         $("#page_info").empty();
         $("#page_info").append("当前页码:" + result.extend.pages.pageNum + ",共" + result.extend.pages.pages + "页，总共" + result.extend.pages.total + "记录");
-
+        totalpages = result.extend.pages.pages + 1;
         var firstpage = $("<li></li>").append($("<a></a>").append("首页"));
         firstpage.click(function () {
             to_page(1);
@@ -255,25 +208,43 @@
         $("#pages").append($("<nav aria-label='Page navigation'></nav>").append(ul));
     }
 
+    // 显示添加的悬浮窗
     $("#add_button").click(function () {
+        $("#deptName_select").empty();
         getDept();
         $('#myModal').modal({
             backdrop: "static"
         });
     });
-           function getDept(){
-               $.ajax({
-                   url: "${APP_PATH}/depts",
-                   type: "GET",
-                   success:function (result){
-                       console.log(result);
-                       var depts=result.extend.depts;
-                       $.each(depts,function (){
-                           $("#deptName_select").append($("<option></option>").append(this.deptId+"."+this.deptName));
-                       });
-                   }
-               });
-           }
+
+    function getDept() {
+        $.ajax({
+            url: "${APP_PATH}/depts",
+            type: "GET",
+            success: function (result) {
+                console.log(result);
+                var depts = result.extend.depts;
+                $.each(depts, function () {
+                    var optionEle = $("<option></option>").append(this.deptName).attr("value", this.deptId);
+                    optionEle.appendTo("#deptName_select");
+                });
+            }
+        });
+    }
+
+    $("#emp_save_button").click(function () {
+        console.log($("#emp_model").serialize());
+        $.ajax({
+            url: "${APP_PATH}/emp",
+            type: "POST",
+            data: $("#emp_model").serialize(),
+            success: function (result) {
+                console.log(result);
+                $('#myModal').modal("hide");
+                to_page(totalpages);
+            }
+        });
+    });
 </script>
 
 </body>
