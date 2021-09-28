@@ -35,6 +35,7 @@
                         <div class="col-sm-5">
                             <input type="text" class="form-control" id="empAdd_input" name="empName"
                                    placeholder="empName">
+                            <span class="help-block"></span>
                         </div>
                     </div>
                     <div class="form-group">
@@ -42,6 +43,7 @@
                         <div class="col-sm-5">
                             <input type="email" class="form-control" id="emailAdd_input" name="email"
                                    placeholder="email@qq.com">
+                            <span class="help-block"></span>
                         </div>
                     </div>
                     <div class="form-group">
@@ -122,6 +124,7 @@
 </div>
 <script type="text/javascript">
     var totalpages;
+    var checkName=true;
     $(function () {
         to_page(1);
     });
@@ -210,6 +213,7 @@
 
     // 显示添加的悬浮窗
     $("#add_button").click(function () {
+        $('#myModal form')[0].reset();
         $("#deptName_select").empty();
         getDept();
         $('#myModal').modal({
@@ -232,7 +236,67 @@
         });
     }
 
+    // 校验表单数据
+    function validate_add_form() {
+        var name = $("#empAdd_input").val();
+        var reg = /(^[a-zA-Z0-9_-]{6,16}$)|(^[\u2E80-\u9FFF]{2,5})/;
+        var email = $("#emailAdd_input").val();
+        var regE = /^[a-z\d]+(\.[a-z\d]+)*@([\da-z](-[\da-z])?)+(\.{1,2}[a-z]+)+$/;
+        if (!reg.test(name)) {
+            validate_add_form_msg("#empAdd_input", "error", "请取2-5个汉字或者6-16个英文名字");
+            return false;
+        } else {
+            validate_add_form_msg("#empAdd_input");
+        }
+        ;
+        if (!regE.test(email)) {
+            validate_add_form_msg("#emailAdd_input", "error", "邮箱不符合规范");
+            return false;
+        } else {
+            validate_add_form_msg("#emailAdd_input");
+        }
+        ;
+        return true;
+    }
+
+    $("#empAdd_input").change(function (){
+        $.ajax({
+            url:"${APP_PATH}/checkUser",
+            type:"POST",
+            data:"empName="+this.value,
+            success:function (result){
+             if (result.code==200){
+                 console.log(result);
+                 validate_add_form_msg("#empAdd_input", "error", "名字已重复");
+                 checkName=false;
+             }else {
+                 checkName=true;
+             }
+            }
+        });
+ });
+    function validate_add_form_msg(ele, status, msg) {
+        $(ele).parent().removeClass("has-error has-success");
+        if ("error" == status) {
+            $(ele).parent().addClass("has-error");
+            $(ele).next("span").text(msg);
+        } else {
+            $(ele).parent().addClass("has-success");
+            $(ele).next("span").text("");
+        }
+
+
+    }
+
     $("#emp_save_button").click(function () {
+        if (!validate_add_form()) {
+            return false;
+        }
+        if (!checkName){
+            validate_add_form_msg("#empAdd_input", "error", "名字已重复");
+            return false;
+        }
+
         console.log($("#emp_model").serialize());
         $.ajax({
             url: "${APP_PATH}/emp",

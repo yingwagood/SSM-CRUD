@@ -44,6 +44,16 @@ public class EmployeeController {
         employeeService.saveEmp(employee);
         return Msg.success();
     }
+    @ResponseBody
+    @RequestMapping("/checkUser")
+       public Msg checkUser(String empName){
+       Boolean b= employeeService.checkUser(empName);
+       if (b){
+           return Msg.success();
+       }else {
+           return Msg.fail();
+       }
 
+       }
 
 }
