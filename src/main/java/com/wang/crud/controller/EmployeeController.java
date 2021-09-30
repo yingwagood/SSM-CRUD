@@ -8,11 +8,9 @@ import com.wang.crud.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -44,16 +42,55 @@ public class EmployeeController {
         employeeService.saveEmp(employee);
         return Msg.success();
     }
+
     @ResponseBody
     @RequestMapping("/checkUser")
-       public Msg checkUser(String empName){
-       Boolean b= employeeService.checkUser(empName);
-       if (b){
-           return Msg.success();
-       }else {
-           return Msg.fail();
-       }
+    public Msg checkUser(String empName) {
+        Boolean b = employeeService.checkUser(empName);
+        if (b) {
+            return Msg.success();
+        } else {
+            return Msg.fail();
+        }
 
-       }
+    }
 
+    @RequestMapping(value = "/emp/{id}", method = RequestMethod.GET)
+    @ResponseBody
+    public Msg getEmp(@PathVariable("id") Integer id) {
+        Employee employee = employeeService.getEmp(id);
+        return Msg.success().add("emp", employee);
+    }
+
+    @RequestMapping(value = "/emp/{empId}", method = RequestMethod.PUT)
+    @ResponseBody
+    public Msg updateEmp(Employee employee) {
+        employeeService.updateEmp(employee);
+        return Msg.success();
+
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/emp/{ids}", method = RequestMethod.DELETE)
+    public Msg deletEmp(@PathVariable("ids") String ids) {
+        int res = 0;
+        if (ids.contains("-")) {
+            String[] strings = ids.split("-");
+            ArrayList<Integer> list = new ArrayList<>();
+            for (String s: strings){
+                int i = Integer.parseInt(s);
+                list.add(i);
+            }
+            res = employeeService.deletByIds(list);
+        } else {
+            int id = Integer.parseInt(ids);
+            res = employeeService.deletById(id);
+        }
+        if (res != 0) {
+            return Msg.success();
+        } else {
+            return Msg.fail();
+        }
+
+    }
 }

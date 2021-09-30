@@ -31,11 +31,8 @@
             <div class="modal-body">
                 <form class="form-horizontal" id="emp_model">
                     <div class="form-group">
-                        <label for="empAdd_input" class="col-sm-2 control-label">empName</label>
-                        <div class="col-sm-5">
-                            <input type="text" class="form-control" id="empAdd_input" name="empName"
-                                   placeholder="empName">
-                            <span class="help-block"></span>
+                        <label class="col-sm-2 control-label">empName</label>
+                        <div class="col-sm-5" id="add_input">
                         </div>
                     </div>
                     <div class="form-group">
@@ -67,7 +64,7 @@
                 </form>
 
             </div>
-            <div class="modal-footer ">
+            <div class="modal-footer " id="save">
                 <button type="button" class="btn btn-default " data-dismiss="modal">关闭</button>
                 <button type="button" class="btn btn-primary" id="emp_save_button">保存修改</button>
             </div>
@@ -87,7 +84,7 @@
     <div class="row">
         <div class="col-md-4 col-md-offset-8 ">
             <button type="button" class="btn btn-primary" id="add_button">新增</button>
-            <button type="button" class="btn btn-danger">删除</button>
+            <button type="button" class="btn btn-danger" id="total_delete_button">删除</button>
         </div>
     </div>
     <br/>
@@ -99,6 +96,7 @@
             <table class="table table-hover" id="emps_table">
                 <thead>
                 <tr>
+                    <th><input type="checkbox" id="check_delete"></th>
                     <th>#</th>
                     <th>empName</th>
                     <th>gender</th>
@@ -124,7 +122,8 @@
 </div>
 <script type="text/javascript">
     var totalpages;
-    var checkName=true;
+    var checkName = true;
+    var currentPage;
     $(function () {
         to_page(1);
     });
@@ -139,6 +138,7 @@
                     console.log(result);
                     result_emps(result);
                     result_pages(result);
+                    $("#check_delete").prop("checked",false);
                 }
             }
         );
@@ -150,6 +150,7 @@
         $("#pages").empty();
         var emps = result.extend.pages.list;
         $.each(emps, function (index, item) {
+            var empcheck=$("<td><input type='checkbox' class='checkDet'/></td>");
             var empId = $("<td></td>").append(item.empId);
             var empName = $("<td></td>").append(item.empName);
             if (item.gender == 0) {
@@ -160,12 +161,101 @@
             }
             var email = $("<td></td>").append(item.email);
             var dName = $("<td></td>").append(item.department.deptName);
-            var addBut = $("<button aria-label='Left Align' class='btn btn-primary btn-sm'></button>").append($("<span class='glyphicon glyphicon-pencil' aria-hidden='true'></span>")).append("新增");
-            var delBut = $("<button aria-label='Left Align'></button>").addClass("btn btn-danger btn-sm").append($("<span class='glyphicon glyphicon-pencil' aria-hidden='true'></span>")).append("删除");
+            var addBut = $("<button aria-label='Left Align' class='btn btn-primary btn-sm add_button'></button>").append($("<span class='glyphicon glyphicon-pencil' aria-hidden='true'></span>")).append("修改");
+            var delBut = $("<button aria-label='Left Align'></button>").addClass("btn btn-danger btn-sm det_button").append($("<span class='glyphicon glyphicon-pencil' aria-hidden='true'></span>")).append("删除");
             var totalBut = $("<td></td>").append(addBut).append(delBut);
-            $("<tr></tr>").append(empId).append(empName).append(gender).append(email).append(dName).append(totalBut).appendTo("#emps_table tbody");
+            $("<tr></tr>").append(empcheck).append(empId).append(empName).append(gender).append(email).append(dName).append(totalBut).appendTo("#emps_table tbody");
         });
     }
+
+    function getEmp(id) {
+        $.ajax({
+            url: "${APP_PATH}/emp/" + id,
+            type: "GET",
+            success: function (result) {
+                var NAME = result.extend.emp.empName;
+                $("#add_input").append($("<p name='empName' class='form-control-static'></p>").append(NAME).attr("value", NAME));
+                $("#emailAdd_input").val(result.extend.emp.email);
+                $("input[name=gender]").val([result.extend.emp.gender]);
+                $("#deptName_select").val([result.extend.emp.dId]);
+            }
+        });
+    }
+
+    // 修改保存功能
+    $(document).on("click", "#updata_button", function () {
+        if (!validate_add_form()) {
+            return false;
+        }
+        console.log($("#emp_model").serialize() + "&_method=put");
+        $.ajax({
+            url: "${APP_PATH}/emp/" + ID,
+            data: $("#emp_model").serialize() + "&_method=put",
+            type: "POST",
+            success: function (result) {
+                $('#myModal').modal("hide");
+                to_page(currentPage);
+            }
+        });
+    });
+    var ID;
+    $(document).on("click", ".add_button", function () {
+        $("#deptName_select").empty();
+        $("#add_input").empty();
+        $("#myModalLabel").text("员工修改");
+        $("#save button").last().remove();
+        $("#save").append($("<button type='button' class='btn btn-primary' id='updata_button'>确认修改</button>"));
+        getDept();
+        ID = $(this).parent().parent().children().first().text();
+        getEmp(ID);
+        $('#myModal').modal({
+            backdrop: "static"
+        });
+    });
+    $(document).on("click", ".det_button", function () {
+        var userName = $(this).parents("tr").find("td:eq(2)").text();
+        ID=$(this).parents("tr").find("td:eq(1)").text();
+        if (confirm("确认是否删除用户：" + userName)) {
+            $.ajax({
+                url: "${APP_PATH}/emp/"+ID,
+                type:"DELETE",
+                success:function (result){
+                    console.log(result);
+                    to_page(currentPage);
+                }
+            });
+        }
+    });
+    $("#check_delete").click(function (){
+       var value= $(this).prop("checked");
+        $(".checkDet").prop("checked",value);
+    });
+    $(document).on("click", ".checkDet", function () {
+           var isflag=$(".checkDet:checked").length==$(".checkDet").length
+               $("#check_delete").prop("checked",isflag);
+
+    });
+    $(document).on("click", "#total_delete_button", function () {
+        var userNames="";
+        var id="";
+          $.each($(".checkDet:checked"),function (){
+           userNames += $(this).parents("tr").find("td:eq(2)").text()+",";
+           id+=$(this).parents("tr").find("td:eq(1)").text()+"-";
+          });
+         userNames=userNames.substring(0,userNames.length-1);
+         id=id.substring(0,id.length-1);
+         console.log(id);
+        if (confirm("确认是否删除用户：" +  userNames)) {
+            $.ajax({
+                url: "${APP_PATH}/emp/"+id,
+                type:"DELETE",
+                success:function (result){
+                    console.log(result);
+                    to_page(currentPage);
+                }
+            });
+        }
+    });
 
     // 显示页码选择，比如首页等
     function result_pages(result) {
@@ -204,6 +294,7 @@
             });
             if (result.extend.pages.pageNum == item) {
                 numpage.addClass("active");
+                currentPage = item;
             }
             ul.append(numpage);
         });
@@ -216,6 +307,11 @@
         $('#myModal form')[0].reset();
         $("#deptName_select").empty();
         getDept();
+        $("#add_input").empty();
+        $("#add_input").append($("<input type='text' class='form-control' id='empAdd_input' name='empName' placeholder='empName'>")).append("<span class='help-block'></span>");
+        $("#myModalLabel").text("员工添加");
+        $("#save button").last().remove();
+        $("#save").append($("<button type='button' class='btn btn-primary' id='emp_save_button'>保存员工</button>"));
         $('#myModal').modal({
             backdrop: "static"
         });
@@ -259,22 +355,23 @@
         return true;
     }
 
-    $("#empAdd_input").change(function (){
+    $(document).on("change", "#empAdd_input", function () {
         $.ajax({
-            url:"${APP_PATH}/checkUser",
-            type:"POST",
-            data:"empName="+this.value,
-            success:function (result){
-             if (result.code==200){
-                 console.log(result);
-                 validate_add_form_msg("#empAdd_input", "error", "名字已重复");
-                 checkName=false;
-             }else {
-                 checkName=true;
-             }
+            url: "${APP_PATH}/checkUser",
+            type: "POST",
+            data: "empName=" + this.value,
+            success: function (result) {
+                if (result.code == 200) {
+                    console.log(result);
+                    validate_add_form_msg("#empAdd_input", "error", "名字已重复");
+                    checkName = false;
+                } else {
+                    checkName = true;
+                }
             }
         });
- });
+    });
+
     function validate_add_form_msg(ele, status, msg) {
         $(ele).parent().removeClass("has-error has-success");
         if ("error" == status) {
@@ -288,15 +385,14 @@
 
     }
 
-    $("#emp_save_button").click(function () {
+    $(document).on("click", "#emp_save_button", function () {
         if (!validate_add_form()) {
             return false;
         }
-        if (!checkName){
+        if (!checkName) {
             validate_add_form_msg("#empAdd_input", "error", "名字已重复");
             return false;
         }
-
         console.log($("#emp_model").serialize());
         $.ajax({
             url: "${APP_PATH}/emp",
@@ -309,6 +405,8 @@
             }
         });
     });
+
+
 </script>
 
 </body>

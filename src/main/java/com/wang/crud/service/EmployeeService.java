@@ -28,4 +28,22 @@ public class EmployeeService {
         long l = employeeMapper.countByExample(employeeExample);
         return l==0;
     }
+
+    public Employee getEmp(Integer id) {
+        return employeeMapper.selectByPrimaryKey(id);
+    }
+
+    public void updateEmp(Employee employee) {
+        employeeMapper.updateByPrimaryKeySelective(employee);
+    }
+
+    public int deletById(Integer id) {
+     return  employeeMapper.deleteByPrimaryKey(id);
+    }
+
+    public int deletByIds(List<Integer> integerList) {
+        EmployeeExample example = new EmployeeExample();
+       example.createCriteria().andEmpIdIn(integerList);
+        return employeeMapper.deleteByExample(example);
+    }
 }
